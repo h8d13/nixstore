@@ -62,12 +62,12 @@ cp -al "$STORE/nix" "$TMP/staging/nix"
 cat > "$TMP/staging/entries.cfg" <<EOF
 menuentry "nixarch: $G2" {
 	search --no-floppy --set=nixdev --label NIXSTORE
-	linux (\$nixdev)/nix/store/$G2/boot/vmlinuz-linux nixgen=$G2
+	linux (\$nixdev)/nix/store/$G2/boot/vmlinuz-linux nixgen=$G2 nixsource=disk
 	initrd (\$nixdev)/nix/store/$G2/boot/initramfs-linux.img
 }
 menuentry "nixarch: $G1 (rollback)" {
 	search --no-floppy --set=nixdev --label NIXSTORE
-	linux (\$nixdev)/nix/store/$G1/boot/vmlinuz-linux nixgen=$G1
+	linux (\$nixdev)/nix/store/$G1/boot/vmlinuz-linux nixgen=$G1 nixsource=disk
 	initrd (\$nixdev)/nix/store/$G1/boot/initramfs-linux.img
 }
 EOF

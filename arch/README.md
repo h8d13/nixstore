@@ -20,6 +20,7 @@ builds the *next* generation offline; the running root is never touched.
 | `iso/mkiso.sh <store-root> <base>` | bootable ISO: squashed store + GRUB entry per generation |
 | `iso/mkstoredisk.sh [img] [size]` | blank ext4 disk (label NIXSTORE); attached, it persists committed generations |
 | `iso/mkbootdisk.sh <store-root> [img] [MiB]` | standalone bootable disk image (UEFI, no ISO): GRUB ESP + seeded store partition |
+| `iso/flashdisk.sh <store-root> <device>` | one-shot flash: sizes image to the disk, builds, writes, fscks both partitions |
 | `iso/boot-test.sh` | headless QEMU smoke-boot of the ISO, PASS on autologin |
 | `iso/update-test.sh` | e2e: kernel upgrade in the box, boot the result from the store disk alone |
 
@@ -61,20 +62,21 @@ commit to keep that.
 
 ## Real hardware (UEFI only, Secure Boot off)
 
-Size the image to the target disk, flash, done. Sparse: real bytes =
-store size, `conv=sparse` skips the rest, so a full-disk image flashes
-in minutes.
-
 ```
-arch/iso/mkbootdisk.sh build/archstore build/nixarch-disk.img \
-    $(( $(lsblk -b -dn -o SIZE /dev/sdX) / 1048576 ))
-sudo dd if=build/nixarch-disk.img of=/dev/sdX bs=4M conv=sparse \
-    oflag=direct status=progress && sync
+arch/iso/flashdisk.sh build/archstore /dev/sdX
 ```
 
-`sdX` = the whole target disk, not a partition; everything on it is
-lost. The size arithmetic is bash; from fish, run the mkbootdisk line
-via `sh -c '...'`.
+One command: sizes the image to the disk, builds it, writes it, fscks
+both partitions. It refuses to run until the device path is typed back;
+everything on the disk is lost. ~6 minutes, most of it the silent
+mkbootdisk assembly (mkfs + hole-scanning dd).
+
+What it does under the hood, for doing it manually: GPT+ESP (first
+66MiB) written in full: a sparse write would leave the previous flash's
+FAT metadata under the holes. Store partition written `conv=sparse`:
+its metadata is all real bytes in the image, and `fsck.ext4 -fn`
+afterwards proves the result. Never plain `conv=sparse` for the whole
+disk on a previously-used target.
 
 ## Gotchas
 
@@ -99,9 +101,17 @@ via `sh -c '...'`.
   purpose (root bypasses them; restoring would copy-up every file).
 - **Diskless BIOS boots pay ~10s** of GRUB probing for the absent
   NIXSTORE label. Known cost, attached-disk boots don't pay it.
-- **`conv=sparse` leaves old bytes** physically present in the skipped
-  regions of the target disk. Harmless (ext4 never reads unallocated
-  blocks); drop it for a full overwrite.
+- **Sparse flashing trusts skipped regions to read zero.** On a
+  previously-used disk they don't: the ESP (mostly zeros) inherits the
+  old flash's FAT metadata. flashdisk.sh writes the first 66MiB in
+  full and verifies both filesystems; stale bytes in ext4 *data*
+  blocks stay harmless (never read before written).
+- **USB store disks enumerate late.** `udevadm settle` doesn't wait
+  for undiscovered hardware, so disk-only boots on usb lost a ~5s
+  race and fell into the ISO hunt (`wrong fs type` spam, no
+  recovery). Disk-boot GRUB entries carry `nixsource=disk`, which
+  makes the initramfs wait (up to 30s) for the store disk instead.
+  Virtio enumerates instantly: a VM PASS does not cover this path.
 - **update-test.sh pins a dated Arch Archive snapshot** to prove a real
   kernel version change; archive use lives in the test only, stock
   generations track live mirrors.

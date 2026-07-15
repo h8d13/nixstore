@@ -37,6 +37,14 @@ nixgen_mount_handler() {
 	# here where poll_device would burn its full timeout
 	storedev="/dev/disk/by-label/${nixstorelabel:-NIXSTORE}"
 	udevadm settle --timeout=5 2>/dev/null
+	# nixsource=disk (set by mkbootdisk/commit/update entries): root is
+	# on the store disk and no ISO exists. Wait out slow buses (usb)
+	# here: settle only covers already-discovered hardware, and the ISO
+	# hunt below cannot recover a disk that shows up late
+	if [ "$nixsource" = "disk" ] && [ ! -b "$storedev" ]; then
+		msg ":: nixgen: waiting for store disk $storedev"
+		poll_device "$storedev" 30
+	fi
 	if [ -b "$storedev" ] && mount "$storedev" /run/nixstoredev; then
 		msg ":: nixgen: writable store on $storedev"
 	fi

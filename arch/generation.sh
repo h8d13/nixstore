@@ -38,6 +38,9 @@ mount -t overlay overlay \
 # (store lower is canonical 0555); see nixgen-savemeta
 if [ -f "$BASE/etc/nixgen/perms" ]; then
 	"$REPO/arch/iso/nixgen-restmeta" "$TMP/mnt"
+else
+	echo "WARN: $BASE has no etc/nixgen/perms; canonical 0555 modes" \
+		"stay, pacman will warn (re-bootstrap the base)" >&2
 fi
 mount --rbind /dev "$TMP/mnt/dev"
 mount -t proc proc "$TMP/mnt/proc"

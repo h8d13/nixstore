@@ -27,7 +27,8 @@ int main(int argc, char ** argv)
 	   root default "nixbld" doesn't exist */
 	globalConfig.set("build-users-group", "");
 
-	auto store = openStore(std::string("local?root=") + argv[1]);
+	/* openStore aborts on a relative root */
+	auto store = openStore("local?root=" + std::filesystem::absolute(argv[1]).string());
 	auto local = store.dynamic_pointer_cast<LocalStore>();
 	auto dir = std::filesystem::absolute(argv[3]);
 

@@ -2,6 +2,7 @@
 // GC codepath: refuses paths that other valid paths still reference.
 // usage: rm-path <store-root> <store-path-basename>...
 #include <cstdio>
+#include <filesystem>
 
 #include <nix/store/gc-store.hh>
 #include <nix/store/globals.hh>
@@ -22,7 +23,8 @@ int main(int argc, char ** argv)
 	verbosity = lvlError;
 	globalConfig.set("build-users-group", "");
 
-	auto store = openStore(std::string("local?root=") + argv[1]);
+	/* openStore aborts on a relative root */
+	auto store = openStore("local?root=" + std::filesystem::absolute(argv[1]).string());
 	auto & gcStore = require<GcStore>(*store);
 
 	GCOptions::SpecificPaths specific;

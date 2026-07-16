@@ -25,7 +25,7 @@ C API in `nix_api_store.h` ([external API docs](https://hydra.nixos.org/job/nix/
 
 ---
 
-## arch/: Arch Linux generations ([arch/README.md](arch/README.md))
+## [Arch Linux generations](arch/README.md)
 
 Immutable Arch generations on the store: updates build the next
 generation offline, rollback is booting an older GRUB entry.

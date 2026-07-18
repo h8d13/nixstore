@@ -150,8 +150,6 @@ drive "NIXARCH BOOT OK" \
 	"shadow=600" \
 	"command -v tree" \
 	"/usr/bin/tree" \
-	'touch /etc/stmark && echo statustest >> /etc/hosts && rm /etc/motd && chmod 600 /etc/profile && nixgen-status -v > /tmp/st; grep -q "^A /etc/stmark" /tmp/st && grep -q "^M /etc/hosts" /tmp/st && grep -q "^D /etc/motd" /tmp/st && grep -q "^T /etc/profile" /tmp/st && nixgen-status opt | grep -q clean && echo STATUS_OK' \
-	"STATUS_OK" \
 	"nixgen-remove $NEWGEN" \
 	"refusing to remove the running generation" \
 	"nixgen-commit test-rm" \

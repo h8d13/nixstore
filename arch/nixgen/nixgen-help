@@ -25,7 +25,10 @@ COMMANDS
        nixgen-update <name> [cmd]
               Build the next generation offline (default pacman -Syu)
               with its upper on the store disk; the live root and its
-              module tree stay intact. Reboot to switch.
+              module tree stay intact. Reboot to switch. No-op runs
+              bail without importing: a db pre-check skips the build
+              entirely (default cmd only), and an unchanged tree after
+              any cmd skips the import.
 
        nixgen-switch <name>
               Soft-reboot into another generation, the fast path for

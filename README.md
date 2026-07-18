@@ -30,9 +30,7 @@ C API in `nix_api_store.h` ([external API docs](https://hydra.nixos.org/job/nix/
 Immutable Arch generations on the store: updates build the next
 generation offline, rollback is booting an older GRUB entry.
 
-### From releases:
-
-[ISO](https://github.com/h8d13/archinix/releases)
+### From releases: [ISO](https://github.com/h8d13/archinix/releases)
 
 Currently GRUB/Ext4 only.
 

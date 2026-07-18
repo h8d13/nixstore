@@ -8,7 +8,16 @@
 # commit includes them. Scrubbed like nixgen-commit: sockets/fifos and
 # the pacman package cache; plus the boot hook's synthetic /nixstore
 # and /nixstoredev mountpoint dirs (present every boot, zero signal).
-# usage: nixgen-status [subpath]
+# T needs a stat pair on every path present in both trees, the bulk of
+# the walk on a big upper: it only runs under -v, the default stays fast.
+# usage: nixgen-status [-v] [subpath]
+
+VERBOSE=
+case $1 in
+-v|--verbose)
+	VERBOSE=1
+	shift ;;
+esac
 
 # upper/lower straight from the root overlay's mount options: survives
 # nixgen-switch, whose fresh upper lives under /run/nixgen-cow.*, not
@@ -66,17 +75,20 @@ classify() {
 	case $t in
 	d)	if is_opaque "$1"; then
 			echo "R /$rel"
-		elif [ "$(meta "$1")" != "$(meta "$low")" ]; then
+		elif [ -n "$VERBOSE" ] \
+				&& [ "$(meta "$1")" != "$(meta "$low")" ]; then
 			echo "T /$rel"
 		fi ;;	# bare ancestor copy-up: its children speak
 	l)	if [ "$(readlink -- "$1")" != "$(readlink -- "$low")" ]; then
 			echo "M /$rel"
-		elif [ "$(meta "$1")" != "$(meta "$low")" ]; then
+		elif [ -n "$VERBOSE" ] \
+				&& [ "$(meta "$1")" != "$(meta "$low")" ]; then
 			echo "T /$rel"
 		fi ;;
 	f)	if ! cmp -s -- "$1" "$low"; then
 			echo "M /$rel"
-		elif [ "$(meta "$1")" != "$(meta "$low")" ]; then
+		elif [ -n "$VERBOSE" ] \
+				&& [ "$(meta "$1")" != "$(meta "$low")" ]; then
 			echo "T /$rel"
 		fi ;;	# equal content+meta = mtime-only copy-up, silent
 	o)	echo "M /$rel" ;;

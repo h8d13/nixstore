@@ -30,6 +30,20 @@ C API in `nix_api_store.h` ([external API docs](https://hydra.nixos.org/job/nix/
 Immutable Arch generations on the store: updates build the next
 generation offline, rollback is booting an older GRUB entry.
 
+### From releases:
+
+[ISO](https://github.com/h8d13/archinix/releases)
+
+Currently GRUB/Ext4 only.
+
+`nixgen-setup /dev/disk` installs current running generation to a hard disk.
+
+In the box: `nixgen-{commit,update,switch,remove,listid,diffid,setup}`;
+
+`nixgen-help` is the full reference.
+
+### From source:
+
 ```
 ./build.sh                                       # store libs into build/prefix
 arch/bootstrap.sh build/archstore                # base generation (prints <base>)
@@ -37,8 +51,5 @@ arch/iso/mkiso.sh build/archstore <base>         # bootable ISO
 arch/uefi-vm.sh iso                              # try it in QEMU (UEFI)
 arch/iso/flashdisk.sh build/archstore /dev/sdX   # flash to hardware
 ```
-
-In the box: `nixgen-{commit,update,switch,remove,listid,diffid,setup}`;
-`nixgen-help` is the full reference.
 
 Examples of post scripts: https://github.com/h8d13/nixarch.cfg

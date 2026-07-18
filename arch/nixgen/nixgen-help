@@ -95,10 +95,10 @@ INTERNALS
               This page.
 
 FILES
-       /nixstore              store holding the running generation
-       /nixstoredev           store-disk root (when attached)
-       /nixstoredev/entries.cfg   GRUB menu of committed generations
-       /run/nixgen-active     live generation after a soft switch
+       /nixstore                     store holding the running generation
+       /nixstoredev                  store-disk root (when attached)
+       /nixstoredev/entries.cfg      GRUB menu of committed generations
+       /run/nixgen-active            live generation after a soft switch
        etc/nixgen/{perms,caps,acls}  metadata manifests, per generation
 
 NIXGEN(7)                  nixstore generations                  NIXGEN(7)

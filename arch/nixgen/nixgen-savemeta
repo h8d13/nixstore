@@ -43,5 +43,8 @@ getcap -r . > etc/nixgen/caps
 # journal pruned: journald re-applies its journal ACLs on write and
 # rotates files, capturing them churns the manifest every build. A
 # stable manifest is what makes no-op update detection possible
-find . -mindepth 1 -xdev -path ./var/log/journal -prune -o -print0 \
+# only files and dirs: ACLs cannot live on symlinks, and getfacl -P
+# on one is an ELOOP error that would abort the whole capture (-e)
+find . -mindepth 1 -xdev -path ./var/log/journal -prune \
+	-o \( -type f -o -type d \) -print0 \
 	| sort -z | xargs -0 -r getfacl -sPp --numeric > etc/nixgen/acls

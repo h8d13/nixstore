@@ -93,13 +93,19 @@ if [ -n "$1" ]; then
 	}
 fi
 
-CHANGES=$(find "$START" -mindepth 1 \
+# stream: a large upper (a pacman -Syu lives in RAM) takes a while,
+# buffering everything reads as a hang
+find "$START" -mindepth 1 \
 	\( -path ./var/cache/pacman/pkg \
 	-o -path ./nixstore -o -path ./nixstoredev \) -prune \
 	-o \( -type s -o -type p \) -o -print \
-	| sort | while IFS= read -r p; do classify "$p"; done)
-if [ -n "$CHANGES" ]; then
-	printf '%s\n' "$CHANGES"
-else
-	echo "clean: nothing uncommitted"
-fi
+	| sort | {
+	any=
+	while IFS= read -r p; do
+		out=$(classify "$p")
+		[ -n "$out" ] || continue
+		printf '%s\n' "$out"
+		any=1
+	done
+	[ -n "$any" ] || echo "clean: nothing uncommitted"
+}

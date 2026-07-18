@@ -35,6 +35,9 @@ LOWER=/nixstore/$GEN
 # unchanged-tree check after the run can judge those.
 if [ "$CMD" = "pacman -Syu --noconfirm" ]; then
 	DB=$(mktemp -d /tmp/nixgen-checkup.XXXXXX)
+	# ^C during the sync (a network wait) must not leak the dir; the
+	# sandbox phase below replaces this trap with its own
+	trap 'rm -rf "$DB"' EXIT
 	# mktemp's 700 blocks the DownloadUser (alpm) from writing .part
 	# files under sync/; checkupdates' mkdir'd dbpath is 755
 	chmod 755 "$DB"

@@ -54,6 +54,15 @@ COMMANDS
               Ownership/mode deltas appear as the etc/nixgen/perms
               diff.
 
+       nixgen-status [subpath]
+              What the next nixgen-commit captures, before running it:
+              the overlay upper (uncommitted RAM writes) classified
+              against the running generation. A added, M changed,
+              D deleted, T metadata-only, R dir replaced wholesale.
+              Bookkeeping rows (machine-id, journal) are real: every
+              commit includes them. Reads the live upper, so it stays
+              correct after a soft switch.
+
        nixgen-send <name|id>... > bundle
               Stream committed generations in export wire format
               (nix-store --export compatible), re-hashed against the

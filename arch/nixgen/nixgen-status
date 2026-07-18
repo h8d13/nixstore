@@ -1,0 +1,105 @@
+#!/bin/sh -e
+# What the next nixgen-commit would capture, from inside the box: the
+# root overlay's tmpfs upper (the kernel already journals every
+# uncommitted write there) classified against the running generation.
+#   A added   M content changed   D deleted (whiteout)
+#   T metadata-only copy-up (mode/owner)   R dir replaced (opaque)
+# Bookkeeping rows (machine-id, journal, random-seed) are real: every
+# commit includes them. Scrubbed like nixgen-commit: sockets/fifos and
+# the pacman package cache; plus the boot hook's synthetic /nixstore
+# and /nixstoredev mountpoint dirs (present every boot, zero signal).
+# usage: nixgen-status [subpath]
+
+# upper/lower straight from the root overlay's mount options: survives
+# nixgen-switch, whose fresh upper lives under /run/nixgen-cow.*, not
+# /run/cow. Env override is the test seam (no root overlay in a test)
+if [ -z "$NIXGEN_UPPER" ]; then
+	OPTS=$(awk '$2 == "/" && $3 == "overlay" { print $4 }' /proc/mounts)
+	NIXGEN_UPPER=$(echo "$OPTS" | tr ',' '\n' | sed -n 's/^upperdir=//p')
+	NIXGEN_LOWER=$(echo "$OPTS" | tr ',' '\n' | sed -n 's/^lowerdir=//p')
+fi
+UPPER=$NIXGEN_UPPER LOWER=$NIXGEN_LOWER
+[ -d "$UPPER" ] && [ -d "$LOWER" ] || {
+	echo "no overlay root: not a nixgen boot" >&2
+	exit 1
+}
+
+ftype() {
+	if [ -h "$1" ]; then echo l
+	elif [ -d "$1" ]; then echo d
+	elif [ -f "$1" ]; then echo f
+	else echo o
+	fi
+}
+
+# mode:uid:gid; symlink rows are ownership-only like savemeta's
+meta() {
+	if [ -h "$1" ]; then
+		stat -c '%u:%g' -- "$1"
+	else
+		stat -c '%a:%u:%g' -- "$1"
+	fi
+}
+
+is_opaque() {
+	command -v getfattr >/dev/null 2>&1 || return 1
+	[ "$(getfattr --absolute-names --only-values \
+		-n trusted.overlay.opaque -- "$1" 2>/dev/null)" = y ]
+}
+
+classify() {
+	rel=${1#./}
+	low=$LOWER/$rel
+	if [ -c "$1" ] && [ "$(stat -c '%t:%T' -- "$1")" = "0:0" ]; then
+		echo "D /$rel"
+		return
+	fi
+	if [ ! -e "$low" ] && [ ! -h "$low" ]; then
+		echo "A /$rel"
+		return
+	fi
+	t=$(ftype "$1")
+	if [ "$t" != "$(ftype "$low")" ]; then
+		echo "M /$rel"
+		return
+	fi
+	case $t in
+	d)	if is_opaque "$1"; then
+			echo "R /$rel"
+		elif [ "$(meta "$1")" != "$(meta "$low")" ]; then
+			echo "T /$rel"
+		fi ;;	# bare ancestor copy-up: its children speak
+	l)	if [ "$(readlink -- "$1")" != "$(readlink -- "$low")" ]; then
+			echo "M /$rel"
+		elif [ "$(meta "$1")" != "$(meta "$low")" ]; then
+			echo "T /$rel"
+		fi ;;
+	f)	if ! cmp -s -- "$1" "$low"; then
+			echo "M /$rel"
+		elif [ "$(meta "$1")" != "$(meta "$low")" ]; then
+			echo "T /$rel"
+		fi ;;	# equal content+meta = mtime-only copy-up, silent
+	o)	echo "M /$rel" ;;
+	esac
+}
+
+cd "$UPPER"
+START=.
+if [ -n "$1" ]; then
+	START="./${1#/}"
+	[ -e "$START" ] || [ -h "$START" ] || {
+		echo "clean: nothing uncommitted"
+		exit 0
+	}
+fi
+
+CHANGES=$(find "$START" -mindepth 1 \
+	\( -path ./var/cache/pacman/pkg \
+	-o -path ./nixstore -o -path ./nixstoredev \) -prune \
+	-o \( -type s -o -type p \) -o -print \
+	| sort | while IFS= read -r p; do classify "$p"; done)
+if [ -n "$CHANGES" ]; then
+	printf '%s\n' "$CHANGES"
+else
+	echo "clean: nothing uncommitted"
+fi

@@ -36,7 +36,7 @@ Currently GRUB/Ext4 only.
 
 `nixgen-setup /dev/disk` installs current running generation to a hard disk.
 
-In the box: `nixgen-{commit,update,switch,remove,listid,diffid,setup}`;
+In the box: `nixgen-{commit,update,switch,remove,status,listid,diffid,setup,send,recv}`;
 
 `nixgen-help` is the full reference.
 

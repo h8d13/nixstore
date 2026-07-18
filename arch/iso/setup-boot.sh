@@ -68,6 +68,7 @@ install -m755 "$I/nixgen-update" /usr/local/bin/nixgen-update
 install -m755 "$I/nixgen-switch" /usr/local/bin/nixgen-switch
 install -m755 "$I/nixgen-listid" /usr/local/bin/nixgen-listid
 install -m755 "$I/nixgen-diffid" /usr/local/bin/nixgen-diffid
+install -m755 "$I/nixgen-status" /usr/local/bin/nixgen-status
 install -m755 "$I/nixgen-setup" /usr/local/bin/nixgen-setup
 install -m755 "$I/nixgen-send" /usr/local/bin/nixgen-send
 install -m755 "$I/nixgen-recv" /usr/local/bin/nixgen-recv

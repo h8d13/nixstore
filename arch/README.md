@@ -24,9 +24,16 @@ builds the *next* generation offline; the running root is never touched.
 | `iso/mkbootdisk.sh <store-root> [img] [MiB]` | standalone bootable disk image (UEFI, no ISO): GRUB ESP + seeded store partition |
 | `iso/flashdisk.sh <store-root> <device>` | one-shot flash: sizes image to the disk, builds, writes, fscks both partitions |
 | `uefi-vm.sh [disk\|iso\|clean]` | interactive QEMU on the real UEFI path (OVMF pflash, persistent NVRAM): flashable disk image or ISO |
+| `updev.sh` | in-place box update of `nixgen-*` scripts. Usually when changes are small enough |
+
+## Tests
+
+| script | role |
+|---|---|
 | `tests/boot-test.sh` | headless QEMU smoke-boot of the ISO, PASS on autologin |
 | `tests/update-test.sh` | e2e: kernel upgrade in the box, boot the result from the store disk alone |
 | `tests/meta-test.sh` | host-only: user created in the sandbox survives manifest + restmeta replay |
+
 
 Inside the box (installed by setup-boot.sh): `nixgen-commit`,
 `-update`, `-switch`, `-remove`, `-listid`, `-diffid`, `-setup`,

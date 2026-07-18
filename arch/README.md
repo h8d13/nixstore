@@ -35,9 +35,8 @@ builds the *next* generation offline; the running root is never touched.
 | `tests/meta-test.sh` | host-only: user created in the sandbox survives manifest + restmeta replay |
 
 
-Inside the box (installed by setup-boot.sh):
-`nixgen-commit`, `-update`, `-switch`, `-remove`, `-listid`, `-diffid`, `-setup`,
-`-send`, `-recv`, `-help`. The reference is `nixgen-help` (source:
+Inside the box (installed by `setup-boot.sh`):
+All commands: reference is `nixgen-help` (source:
 [nixgen/nixgen-help](nixgen/nixgen-help), drift-checked by
 update-test: every installed nixgen-* must appear in it).
 

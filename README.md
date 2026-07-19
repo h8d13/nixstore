@@ -5,17 +5,19 @@
 Local-store-only extraction of the Nix store layer (libnixutil,
 libnixstore + C API) from [NixOS/nix](https://github.com/NixOS/nix)
 2.36.0 (`40f375fa`), buildable on any Linux without Nix: `./build.sh`.
-Remote stores (s3/http/ssh/daemon) and the .drv realisation machinery
-are cut: stores hold imported trees only
+
+> [!NOTE]
+> Remote stores (s3/http/ssh/daemon) and the .drv realisation machinery
+> are cut: stores hold imported trees only; and the shell glue for retrieval/integration with userland.
 
 Build depends on: `meson`, `ninja`, C++23 compiler:
 
 Arch package names (`boost` is headers only; the compiled
-`context`/`coroutine`/`iostreams`/`url` libs live in `boost-libs`):
+`context`/`coroutine`/`iostreams` libs live in `boost-libs`):
 
 ```
-pacman -S --needed meson ninja gcc pkgconf boost boost-libs openssl libsodium \
-	libarchive brotli zstd libblake3 nlohmann-json sqlite
+pacman -S --needed meson ninja gcc pkgconf boost boost-libs openssl \
+	libblake3 nlohmann-json sqlite
 ```
 
 API reference:

@@ -113,8 +113,12 @@ CHG=\$(cd "$SCRATCH/upper" && find . -mindepth 1 \
 	\( -path ./var/lib/pacman/sync -o -path ./var/log/pacman.log \) \
 	-prune -o ! -type d -print | while IFS= read -r p; do
 	rel=\${p#./}
+	# content is read through the merged mount, not the raw upper: a
+	# metadata-only copy-up (overlay metacopy, e.g. restmeta chmod on
+	# initramfs) leaves an upper file with no data that raw-reads as
+	# changed; the merged view always serves the real bytes
 	if [ -f "\$p" ] && [ -f "$LOWER/\$rel" ] \
-			&& cmp -s -- "\$p" "$LOWER/\$rel"; then
+			&& cmp -s -- "$SCRATCH/mnt/\$rel" "$LOWER/\$rel"; then
 		continue
 	fi
 	if [ -h "\$p" ] && [ -h "$LOWER/\$rel" ] && [ \
@@ -123,6 +127,9 @@ CHG=\$(cd "$SCRATCH/upper" && find . -mindepth 1 \
 		continue
 	fi
 	echo "\$rel"
+	# serial-visible diagnosis: a no-op cmd importing anyway names
+	# its trigger here instead of leaving a mystery generation
+	echo "tree changed at: \$rel" >&2
 	break
 done)
 if [ -z "\$CHG" ]; then

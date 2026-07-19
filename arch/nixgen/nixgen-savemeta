@@ -46,11 +46,15 @@ find . -mindepth 1 -xdev \( -path './tmp/*' -o -path './var/tmp/*' \) -prune \
 	-o -type f \( -perm /7022 -o ! -perm -444 -o ! -user 0 -o ! -group 0 \
 		-o -path ./etc/skel/\* \) \
 	-o -type l ! \( -user 0 -group 0 \) \) \
-	-printf '%y\t%m\t%U\t%G\t%p\n' | sort -t'	' -k5 > etc/nixgen/perms
+	-printf '%y\t%m\t%U\t%G\t%p\n' | LC_ALL=C sort -t'	' -k5 > etc/nixgen/perms
 # sorted explicit list for the same determinism reason as acls below
-# (getcap -r walks in readdir order); regular files only
+# (getcap -r walks in readdir order); regular files only.
+# LC_ALL=C on every sort: the manifest is regenerated on both sides of
+# the no-op check (host build sandbox vs env -i box), and UTF-8 vs C
+# collation order dot-files differently: same rows, different order,
+# false change
 find . -mindepth 1 -xdev ! -path "*${TAB}*" ! -path "*${NL}*" \
-	-type f -print0 | sort -z | xargs -0 -r getcap > etc/nixgen/caps
+	-type f -print0 | LC_ALL=C sort -z | xargs -0 -r getcap > etc/nixgen/caps
 # -s: only paths carrying extended/default ACLs; numeric ids stay
 # resolution-independent like the perms manifest.
 # Explicit sorted list, not -R: readdir walk order differs between
@@ -62,4 +66,4 @@ find . -mindepth 1 -xdev ! -path "*${TAB}*" ! -path "*${NL}*" \
 # on one is an ELOOP error that would abort the whole capture (-e)
 find . -mindepth 1 -xdev -path ./var/log/journal -prune \
 	-o ! -path "*${TAB}*" ! -path "*${NL}*" \( -type f -o -type d \) -print0 \
-	| sort -z | xargs -0 -r getfacl -sPp --numeric > etc/nixgen/acls
+	| LC_ALL=C sort -z | xargs -0 -r getfacl -sPp --numeric > etc/nixgen/acls

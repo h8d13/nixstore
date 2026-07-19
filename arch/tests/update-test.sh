@@ -81,8 +81,19 @@ PY
 # than the cached live one, plain -Sy 304s and resolves against live;
 # no download timeout: the archive throttles), then restored. \$repo
 # survives the layers to let pacman expand it
-PIN=$(date -d '-30 days' +%Y/%m/%d)
-UPCMD="mv /etc/pacman.d/mirrorlist /tmp/ml && echo \"Server = https://archive.archlinux.org/repos/$PIN/\\\$repo/os/\\\$arch\" > /etc/pacman.d/mirrorlist && pacman -Syy --noconfirm --disable-download-timeout linux tree && mv /tmp/ml /etc/pacman.d/mirrorlist && pacman -Syy --noconfirm"
+#
+# FAST=1: the archive leg is the wall-clock pole (throttled kernel
+# download + the restore resync). Swap it for a local no-network
+# mutation; kernel-diff assertions are skipped, every other leg
+# (lifecycle, ship/adopt, setup, all three boots) runs unchanged.
+if [ -n "$FAST" ]; then
+	UPCMD="echo fastmark > /usr/bin/fastmark && chmod 755 /usr/bin/fastmark"
+	TOOL=/usr/bin/fastmark
+else
+	PIN=$(date -d '-30 days' +%Y/%m/%d)
+	UPCMD="mv /etc/pacman.d/mirrorlist /tmp/ml && echo \"Server = https://archive.archlinux.org/repos/$PIN/\\\$repo/os/\\\$arch\" > /etc/pacman.d/mirrorlist && pacman -Syy --noconfirm --disable-download-timeout linux tree && mv /tmp/ml /etc/pacman.d/mirrorlist && pacman -Syy --noconfirm"
+	TOOL=/usr/bin/tree
+fi
 
 arch/iso/mkstoredisk.sh
 echo "--- boot 1: ISO + fresh disk, offline kernel version change in the box"
@@ -126,11 +137,13 @@ debugfs -R "dump /nix/store/$NEWGEN/boot/initramfs-linux.img build/test-initrd" 
 	build/nixstore.img 2>/dev/null
 [ -s build/test-vmlinuz ] && [ -s build/test-initrd ] \
 	|| { echo "FAIL: kernel/initramfs not extracted from img"; exit 1; }
-cmp -s build/iso-vmlinuz build/test-vmlinuz \
-	&& { echo "FAIL: kernel unchanged (archive install broken)"; exit 1; }
-cmp -s build/iso-initrd build/test-initrd \
-	&& { echo "FAIL: initramfs not regenerated"; exit 1; }
-echo "kernel version changed, initramfs regenerated"
+if [ -z "$FAST" ]; then
+	cmp -s build/iso-vmlinuz build/test-vmlinuz \
+		&& { echo "FAIL: kernel unchanged (archive install broken)"; exit 1; }
+	cmp -s build/iso-initrd build/test-initrd \
+		&& { echo "FAIL: initramfs not regenerated"; exit 1; }
+	echo "kernel version changed, initramfs regenerated"
+fi
 
 echo "--- boot 2: new generation from store disk only (no ISO)"
 rm -f "$SOCK" build/install-test.img
@@ -150,8 +163,8 @@ drive "NIXARCH BOOT OK" \
 	"DB_CLEAN" \
 	'echo "shadow=$(stat -c %a /etc/shadow)"' \
 	"shadow=600" \
-	"command -v tree" \
-	"/usr/bin/tree" \
+	"command -v $(basename $TOOL)" \
+	"$TOOL" \
 	"nixgen-remove $NEWGEN" \
 	"refusing to remove the running generation" \
 	"nixgen-commit test-rm" \
@@ -186,6 +199,18 @@ drive "NIXARCH BOOT OK" \
 	"Only in b/etc: diffmark" \
 	'ok=1; for t in /usr/local/bin/nixgen-*; do nixgen-help | grep -q "$(basename "$t")" || { echo "undocumented: $t"; ok=0; }; done; [ $ok = 1 ] && echo HELP_OK' \
 	"HELP_OK" \
+	'S=$(basename "$(ls -d /nixstoredev/nix/store/*-test-up)"); LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/export-path /nixstoredev "$S" > /nixstoredev/ship.bundle && echo SHIP_"OK"' \
+	"SHIP_OK" \
+	"nixgen-remove test-up" \
+	"GRUB entry pruned" \
+	'[ ! -e "/nixstoredev/nix/store/$S" ] && echo SHIP_"GONE"' \
+	"SHIP_GONE" \
+	'B=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/import-path /nixstoredev < /nixstoredev/ship.bundle) && rm /nixstoredev/ship.bundle && [ "$(basename "$B")" = "$S" ] && echo SHIP_"BACK"' \
+	"SHIP_BACK" \
+	'nixgen-adopt "$S"' \
+	"GRUB entry added" \
+	'nixgen-adopt "$S" 2>&1 || echo DUP_"REFUSED"' \
+	"DUP_REFUSED" \
 	"nixgen-setup /dev/vdb inst-test" \
 	"type the device path to continue" \
 	"/dev/vdb" \
@@ -231,11 +256,15 @@ grep -aq "nixgen=$NEWGEN" "$LOG" || { echo "FAIL: marker missing"; exit 1; }
 ENTRIES=$(debugfs -R "cat /entries.cfg" build/nixstore.img 2>/dev/null)
 echo "$ENTRIES" | grep -q "test-rm" \
 	&& { echo "FAIL: pruned GRUB entry still on disk"; exit 1; }
+# test-up went over the wire: exported, removed, imported back,
+# adopted. Its entry must be the adopted one, commit's is pruned.
 echo "$ENTRIES" | grep -q "nixgen=$NEWGEN" \
-	|| { echo "FAIL: surviving GRUB entry lost"; exit 1; }
+	|| { echo "FAIL: shipped generation's GRUB entry lost"; exit 1; }
+echo "$ENTRIES" | grep -q -- "-test-up (adopted)" \
+	|| { echo "FAIL: adopted entry not on disk"; exit 1; }
 # the switched-into generation was refused removal, its entry must live
 echo "$ENTRIES" | grep -q -- "-test-sw" \
 	|| { echo "FAIL: test-sw GRUB entry lost"; exit 1; }
 echo "PASS: $NEWGEN booted from disk, kernel changed, perms restored," \
 	"tree installed, remove + soft-switch + getty lifecycle clean," \
-	"in-box install boots under OVMF"
+	"ship round trip adopted, in-box install boots under OVMF"

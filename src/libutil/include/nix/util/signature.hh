@@ -2,8 +2,9 @@
 ///@file
 
 #include "nix/util/json-impls.hh"
+#include "nix/util/types.hh"
 
-#include <map>
+#include <set>
 
 namespace nix {
 

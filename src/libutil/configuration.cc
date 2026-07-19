@@ -1,7 +1,6 @@
 #include "nix/util/configuration.hh"
 #include "nix/util/abstract-setting-to-json.hh"
 #include "nix/util/environment-variables.hh"
-#include "nix/util/experimental-features.hh"
 #include "nix/util/util.hh"
 #include "nix/util/file-system.hh"
 
@@ -94,7 +93,7 @@ void Config::getSettings(std::map<std::string, SettingInfo> & res, bool overridd
 {
     for (const auto & opt : _settings)
         if (!opt.second.isAlias && (!overriddenOnly || opt.second.setting->overridden)
-            && experimentalFeatureSettings.isEnabled(opt.second.setting->experimentalFeature))
+            )
             res.emplace(opt.first, SettingInfo{opt.second.setting->to_string(), opt.second.setting->description});
 }
 
@@ -177,23 +176,8 @@ void AbstractConfig::applyConfig(const std::string & contents, const std::string
 
     parseConfigFiles(contents, path, parsedContents);
 
-    // First apply experimental-feature related settings
     for (const auto & [name, value] : parsedContents)
-        if (name == "experimental-features" || name == "extra-experimental-features")
-            set(name, value);
-
-    // Then apply other settings
-    // XXX: NIX_PATH must override the regular setting! This is done in `initGC()`
-    // Environment variables overriding settings should probably be part of the Config mechanism,
-    // but at the time of writing it's not worth building that for just one thing
-    for (const auto & [name, value] : parsedContents) {
-        if (name != "experimental-features" && name != "extra-experimental-features") {
-            if ((name == "nix-path" || name == "extra-nix-path") && getEnv("NIX_PATH").has_value()) {
-                continue;
-            }
-            set(name, value);
-        }
-    }
+        set(name, value);
 }
 
 void Config::resetOverridden()
@@ -220,15 +204,10 @@ std::string Config::toKeyValue()
     return res;
 }
 
-AbstractSetting::AbstractSetting(
-    const std::string & name,
-    const std::string & description,
-    const StringSet & aliases,
-    std::optional<ExperimentalFeature> experimentalFeature)
+AbstractSetting::AbstractSetting(const std::string & name, const std::string & description, const StringSet & aliases)
     : name(name)
     , description(stripIndentation(description))
     , aliases(aliases)
-    , experimentalFeature(std::move(experimentalFeature))
 {
 }
 
@@ -249,10 +228,6 @@ std::map<std::string, nlohmann::json> AbstractSetting::toJSONObject() const
     std::map<std::string, nlohmann::json> obj;
     obj.emplace("description", description);
     obj.emplace("aliases", aliases);
-    if (experimentalFeature)
-        obj.emplace("experimentalFeature", *experimentalFeature);
-    else
-        obj.emplace("experimentalFeature", nullptr);
     return obj;
 }
 
@@ -391,42 +366,6 @@ std::string BaseSetting<std::set<std::filesystem::path>>::to_string() const
 }
 
 template<>
-std::set<ExperimentalFeature> BaseSetting<std::set<ExperimentalFeature>>::parse(const std::string & str) const
-{
-    std::set<ExperimentalFeature> res;
-    for (auto & s : tokenizeString<StringSet>(str)) {
-        if (auto thisXpFeature = parseExperimentalFeature(s); thisXpFeature) {
-            res.insert(thisXpFeature.value());
-            if (thisXpFeature.value() == Xp::Flakes)
-                res.insert(Xp::FetchTree);
-        } else if (s == "no-url-literals")
-            warn(
-                "experimental feature '%s' has been stabilized and renamed; use 'lint-url-literals = fatal' setting instead",
-                s);
-        else
-            warn("unknown experimental feature '%s'", s);
-    }
-    return res;
-}
-
-template<>
-void BaseSetting<std::set<ExperimentalFeature>>::appendOrSet(std::set<ExperimentalFeature> newValue, bool append)
-{
-    if (!append)
-        value.clear();
-    value.insert(std::make_move_iterator(newValue.begin()), std::make_move_iterator(newValue.end()));
-}
-
-template<>
-std::string BaseSetting<std::set<ExperimentalFeature>>::to_string() const
-{
-    StringSet stringifiedXpFeatures;
-    for (const auto & feature : value)
-        stringifiedXpFeatures.insert(std::string(showExperimentalFeature(feature)));
-    return concatStringsSep(" ", stringifiedXpFeatures);
-}
-
-template<>
 StringMap BaseSetting<StringMap>::parse(const std::string & str) const
 {
     StringMap res;
@@ -518,35 +457,9 @@ template class BaseSetting<std::list<std::filesystem::path>>;
 template class BaseSetting<Strings>;
 template class BaseSetting<StringSet>;
 template class BaseSetting<StringMap>;
-template class BaseSetting<std::set<ExperimentalFeature>>;
 template class BaseSetting<std::filesystem::path>;
 template class BaseSetting<AbsolutePath>;
 template class BaseSetting<std::optional<AbsolutePath>>;
 template class BaseSetting<std::optional<std::string>>;
-
-void ExperimentalFeatureSettings::anchor() {}
-
-bool ExperimentalFeatureSettings::isEnabled(const ExperimentalFeature & feature) const
-{
-    auto & f = experimentalFeatures.get();
-    return std::find(f.begin(), f.end(), feature) != f.end();
-}
-
-void ExperimentalFeatureSettings::require(const ExperimentalFeature & feature, std::string reason) const
-{
-    if (!isEnabled(feature))
-        throw MissingExperimentalFeature(feature, std::move(reason));
-}
-
-bool ExperimentalFeatureSettings::isEnabled(const std::optional<ExperimentalFeature> & feature) const
-{
-    return !feature || isEnabled(*feature);
-}
-
-void ExperimentalFeatureSettings::require(const std::optional<ExperimentalFeature> & feature) const
-{
-    if (feature)
-        require(*feature);
-}
 
 } // namespace nix

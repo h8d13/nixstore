@@ -236,15 +236,6 @@ public:
         return res;
     }
 
-    /**
-     * An experimental feature this type store is gated, if it is to be
-     * experimental.
-     */
-    static std::optional<ExperimentalFeature> experimentalFeature()
-    {
-        return std::nullopt;
-    }
-
     Setting<int> pathInfoCacheSize{
         this, 65536, "path-info-cache-size", "Size of the in-memory store path metadata cache."};
 

@@ -60,8 +60,5 @@ GlobalConfig::Register::Register(Config * config)
     configRegistrations().emplace_back(config);
 }
 
-ExperimentalFeatureSettings experimentalFeatureSettings;
-
-static GlobalConfig::Register rSettings(&experimentalFeatureSettings);
 
 } // namespace nix

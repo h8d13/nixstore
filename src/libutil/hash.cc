@@ -29,12 +29,9 @@ const StringSet hashAlgorithms = {"blake3", "md5", "sha1", "sha256", "sha512"};
 
 const StringSet hashFormats = {"base64", "nix32", "base16", "sri"};
 
-Hash::Hash(HashAlgorithm algo, const ExperimentalFeatureSettings & xpSettings)
+Hash::Hash(HashAlgorithm algo)
     : algo(algo)
 {
-    if (algo == HashAlgorithm::BLAKE3) {
-        xpSettings.require(Xp::BLAKE3Hashes);
-    }
     hashSize = regularHashSize(algo);
     assert(hashSize <= maxHashSize);
     memset(hash, 0, maxHashSize);
@@ -144,13 +141,9 @@ static HashFormat baseFromSize(std::string_view rest, HashAlgorithm algo)
  *
  * @param rest the string view to parse. Must not include any `<algo>(:|-)` prefix.
  */
-static Hash parseLowLevel(
-    std::string_view rest,
-    HashAlgorithm algo,
-    DecodeNamePair pair,
-    const ExperimentalFeatureSettings & xpSettings = experimentalFeatureSettings)
+static Hash parseLowLevel(std::string_view rest, HashAlgorithm algo, DecodeNamePair pair)
 {
-    Hash res{algo, xpSettings};
+    Hash res{algo};
     std::string d;
     try {
         d = pair.decode(rest);
@@ -166,7 +159,7 @@ static Hash parseLowLevel(
     return res;
 }
 
-Hash Hash::parseSRI(std::string_view original, const ExperimentalFeatureSettings & xpSettings)
+Hash Hash::parseSRI(std::string_view original)
 {
     auto rest = original;
 
@@ -174,9 +167,9 @@ Hash Hash::parseSRI(std::string_view original, const ExperimentalFeatureSettings
     auto hashRaw = splitPrefixTo(rest, '-');
     if (!hashRaw)
         throw BadHash("hash '%s' is not SRI", original);
-    HashAlgorithm parsedType = parseHashAlgo(*hashRaw, xpSettings);
+    HashAlgorithm parsedType = parseHashAlgo(*hashRaw);
 
-    return parseLowLevel(rest, parsedType, {base64::decode, "SRI"}, xpSettings);
+    return parseLowLevel(rest, parsedType, {base64::decode, "SRI"});
 }
 
 /**
@@ -264,10 +257,9 @@ Hash Hash::parseNonSRIUnprefixed(std::string_view s, HashAlgorithm algo)
     return parseExplicitFormatUnprefixed(s, algo, baseFromSize(s, algo));
 }
 
-Hash Hash::parseExplicitFormatUnprefixed(
-    std::string_view s, HashAlgorithm algo, HashFormat format, const ExperimentalFeatureSettings & xpSettings)
+Hash Hash::parseExplicitFormatUnprefixed(std::string_view s, HashAlgorithm algo, HashFormat format)
 {
-    return parseLowLevel(s, algo, baseExplicit(format), xpSettings);
+    return parseLowLevel(s, algo, baseExplicit(format));
 }
 
 Hash newHashAllowEmpty(std::string_view hashStr, std::optional<HashAlgorithm> ha)
@@ -354,10 +346,10 @@ static void finish(HashAlgorithm ha, Hash::Ctx & ctx, unsigned char * hash)
         SHA512_Final(hash, &ctx.sha512);
 }
 
-Hash hashString(HashAlgorithm ha, std::string_view s, const ExperimentalFeatureSettings & xpSettings)
+Hash hashString(HashAlgorithm ha, std::string_view s)
 {
     Hash::Ctx ctx;
-    Hash hash(ha, xpSettings);
+    Hash hash(ha);
     start(ha, ctx);
     update(ha, ctx, s);
     finish(ha, ctx, hash.hash);
@@ -460,12 +452,10 @@ std::string_view printHashFormat(HashFormat HashFormat)
     }
 }
 
-std::optional<HashAlgorithm> parseHashAlgoOpt(std::string_view s, const ExperimentalFeatureSettings & xpSettings)
+std::optional<HashAlgorithm> parseHashAlgoOpt(std::string_view s)
 {
-    if (s == "blake3") {
-        xpSettings.require(Xp::BLAKE3Hashes);
+    if (s == "blake3")
         return HashAlgorithm::BLAKE3;
-    }
     if (s == "md5")
         return HashAlgorithm::MD5;
     if (s == "sha1")
@@ -477,9 +467,9 @@ std::optional<HashAlgorithm> parseHashAlgoOpt(std::string_view s, const Experime
     return std::nullopt;
 }
 
-HashAlgorithm parseHashAlgo(std::string_view s, const ExperimentalFeatureSettings & xpSettings)
+HashAlgorithm parseHashAlgo(std::string_view s)
 {
-    auto opt_h = parseHashAlgoOpt(s, xpSettings);
+    auto opt_h = parseHashAlgoOpt(s);
     if (opt_h)
         return *opt_h;
     else
@@ -512,10 +502,10 @@ namespace nlohmann {
 
 using namespace nix;
 
-Hash adl_serializer<Hash>::from_json(const json & json, const ExperimentalFeatureSettings & xpSettings)
+Hash adl_serializer<Hash>::from_json(const json & json)
 {
     auto & s = getString(json);
-    return Hash::parseSRI(s, xpSettings);
+    return Hash::parseSRI(s);
 }
 
 void adl_serializer<Hash>::to_json(json & json, const Hash & hash)

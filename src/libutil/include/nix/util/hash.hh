@@ -68,7 +68,7 @@ struct Hash
     /**
      * Create a zero-filled hash object.
      */
-    explicit Hash(HashAlgorithm algo, const ExperimentalFeatureSettings & xpSettings = experimentalFeatureSettings);
+    explicit Hash(HashAlgorithm algo);
 
     /**
      * Parse the hash from a string representation in the format
@@ -104,14 +104,10 @@ struct Hash
      * @param explicitFormat cannot be SRI, but must be one of the
      * "bases".
      */
-    static Hash parseExplicitFormatUnprefixed(
-        std::string_view s,
-        HashAlgorithm algo,
-        HashFormat explicitFormat,
-        const ExperimentalFeatureSettings & xpSettings = experimentalFeatureSettings);
+    static Hash parseExplicitFormatUnprefixed(std::string_view s, HashAlgorithm algo, HashFormat explicitFormat);
 
     static Hash
-    parseSRI(std::string_view original, const ExperimentalFeatureSettings & xpSettings = experimentalFeatureSettings);
+    parseSRI(std::string_view original);
 
 public:
     /**
@@ -157,8 +153,7 @@ Hash newHashAllowEmpty(std::string_view hashStr, std::optional<HashAlgorithm> ha
 /**
  * Compute the hash of the given string.
  */
-Hash hashString(
-    HashAlgorithm ha, std::string_view s, const ExperimentalFeatureSettings & xpSettings = experimentalFeatureSettings);
+Hash hashString(HashAlgorithm ha, std::string_view s);
 
 /**
  * Compute the hash of the given file, hashing its contents directly.
@@ -201,13 +196,13 @@ std::string_view printHashFormat(HashFormat hashFormat);
  * Parse a string representing a hash algorithm.
  */
 HashAlgorithm
-parseHashAlgo(std::string_view s, const ExperimentalFeatureSettings & xpSettings = experimentalFeatureSettings);
+parseHashAlgo(std::string_view s);
 
 /**
  * Will return nothing on parse error
  */
 std::optional<HashAlgorithm>
-parseHashAlgoOpt(std::string_view s, const ExperimentalFeatureSettings & xpSettings = experimentalFeatureSettings);
+parseHashAlgoOpt(std::string_view s);
 
 /**
  * And the reverse.
@@ -265,4 +260,4 @@ inline std::size_t hash_value(const Hash & hash)
 
 } // namespace nix
 
-JSON_IMPL_WITH_XP_FEATURES(Hash)
+JSON_IMPL(Hash)

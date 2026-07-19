@@ -37,12 +37,6 @@ struct BaseSetting<StringMap>::trait
     static constexpr bool appendable = true;
 };
 
-template<>
-struct BaseSetting<std::set<ExperimentalFeature>>::trait
-{
-    static constexpr bool appendable = true;
-};
-
 template<typename T>
 struct BaseSetting<T>::trait
 {
@@ -61,8 +55,6 @@ template<>
 void BaseSetting<StringSet>::appendOrSet(StringSet newValue, bool append);
 template<>
 void BaseSetting<StringMap>::appendOrSet(StringMap newValue, bool append);
-template<>
-void BaseSetting<std::set<ExperimentalFeature>>::appendOrSet(std::set<ExperimentalFeature> newValue, bool append);
 
 template<typename T>
 void BaseSetting<T>::appendOrSet(T newValue, bool append)
@@ -76,15 +68,7 @@ void BaseSetting<T>::appendOrSet(T newValue, bool append)
 template<typename T>
 void BaseSetting<T>::set(const std::string & str, bool append)
 {
-    if (experimentalFeatureSettings.isEnabled(experimentalFeature))
-        appendOrSet(parse(str), append);
-    else {
-        assert(experimentalFeature);
-        warn(
-            "Ignoring setting '%s' because experimental feature '%s' is not enabled",
-            name,
-            showExperimentalFeature(*experimentalFeature));
-    }
+    appendOrSet(parse(str), append);
 }
 
 NIX_DECLARE_CONFIG_SERIALISER(std::string)
@@ -93,7 +77,6 @@ NIX_DECLARE_CONFIG_SERIALISER(bool)
 NIX_DECLARE_CONFIG_SERIALISER(Strings)
 NIX_DECLARE_CONFIG_SERIALISER(StringSet)
 NIX_DECLARE_CONFIG_SERIALISER(StringMap)
-NIX_DECLARE_CONFIG_SERIALISER(std::set<ExperimentalFeature>)
 NIX_DECLARE_CONFIG_SERIALISER(std::filesystem::path)
 NIX_DECLARE_CONFIG_SERIALISER(AbsolutePath)
 NIX_DECLARE_CONFIG_SERIALISER(std::set<std::filesystem::path>)

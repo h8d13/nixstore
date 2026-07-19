@@ -98,11 +98,8 @@ struct LocalStore::State::Stmts
     SQLiteStmt QueryReferrers;
     SQLiteStmt InvalidatePath;
     SQLiteStmt AddDerivationOutput;
-    SQLiteStmt RegisterRealisedOutput;
-    SQLiteStmt UpdateRealisedOutput;
     SQLiteStmt QueryValidDerivers;
     SQLiteStmt QueryDerivationOutputs;
-    SQLiteStmt QueryRealisedOutput;
     SQLiteStmt QueryPathFromHashPart;
     SQLiteStmt QueryValidPaths;
 };
@@ -124,11 +121,8 @@ LocalStore::LocalStore(ref<const Config> config)
 
     /* Create missing state directories if they don't already exist. */
     createDirs(config->realStoreDir.get());
-    if (config->readOnly) {
-        experimentalFeatureSettings.require(Xp::ReadOnlyLocalStore);
-    } else {
+    if (!config->readOnly)
         makeStoreWritable();
-    }
     createDirs(linksDir);
     auto profilesDir = config->stateDir.get() / "profiles";
     createDirs(profilesDir);
@@ -350,32 +344,6 @@ LocalStore::LocalStore(ref<const Config> config)
     // ensure efficient lookup.
     state->stmts->QueryPathFromHashPart.create(state->db, "select path from ValidPaths where path >= ? limit 1;");
     state->stmts->QueryValidPaths.create(state->db, "select path from ValidPaths");
-    if (experimentalFeatureSettings.isEnabled(Xp::CaDerivations)) {
-        state->stmts->RegisterRealisedOutput.create(
-            state->db,
-            R"(
-                insert into BuildTraceV3 (drvPath, outputName, outputPath, signatures)
-                values (?, ?, ?, ?)
-                ;
-            )");
-        state->stmts->UpdateRealisedOutput.create(
-            state->db,
-            R"(
-                update BuildTraceV3
-                    set signatures = ?
-                where
-                    drvPath = ? and
-                    outputName = ?
-                ;
-            )");
-        state->stmts->QueryRealisedOutput.create(
-            state->db,
-            R"(
-                select id, outputPath, signatures from BuildTraceV3
-                    where drvPath = ? and outputName = ?
-                    ;
-            )");
-    }
 }
 
 AutoCloseFD LocalStore::openGCLock()

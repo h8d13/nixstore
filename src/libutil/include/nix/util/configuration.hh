@@ -11,7 +11,6 @@
 #include "nix/util/json-non-null.hh"
 #include "nix/util/types.hh"
 #include "nix/util/fmt.hh"
-#include "nix/util/experimental-features.hh"
 
 namespace nix {
 
@@ -187,7 +186,6 @@ public:
 
     bool overridden = false;
 
-    std::optional<ExperimentalFeature> experimentalFeature;
 
     bool isOverridden() const;
 
@@ -196,8 +194,7 @@ protected:
     AbstractSetting(
         const std::string & name,
         const std::string & description,
-        const StringSet & aliases,
-        std::optional<ExperimentalFeature> experimentalFeature = std::nullopt);
+        const StringSet & aliases);
 
     virtual ~AbstractSetting();
 
@@ -344,9 +341,8 @@ public:
         const bool documentDefault,
         const std::string & name,
         const std::string & description,
-        const StringSet & aliases = {},
-        std::optional<ExperimentalFeature> experimentalFeature = std::nullopt)
-        : AbstractSetting(name, description, aliases, experimentalFeature)
+        const StringSet & aliases = {})
+        : AbstractSetting(name, description, aliases)
         , value(def)
         , defaultValue(def)
         , documentDefault(documentDefault)
@@ -404,8 +400,6 @@ public:
     }
 
     /**
-     * Require any experimental feature the setting depends on
-     *
      * Uses `parse()` to get the value from `str`, and `appendOrSet()`
      * to set it.
      */
@@ -457,9 +451,8 @@ public:
         const std::string & name,
         const std::string & description,
         const StringSet & aliases = {},
-        const bool documentDefault = true,
-        std::optional<ExperimentalFeature> experimentalFeature = std::nullopt)
-        : BaseSetting<T>(def, documentDefault, name, description, aliases, std::move(experimentalFeature))
+        const bool documentDefault = true)
+        : BaseSetting<T>(def, documentDefault, name, description, aliases)
     {
         options->addSetting(this);
     }
@@ -492,9 +485,8 @@ public:
         const std::string & name,
         const std::string & description,
         const StringSet & aliases = {},
-        const bool documentDefault = true,
-        std::optional<ExperimentalFeature> experimentalFeature = std::nullopt)
-        : BaseSetting<AbsolutePath>(def, documentDefault, name, description, aliases, std::move(experimentalFeature))
+        const bool documentDefault = true)
+        : BaseSetting<AbsolutePath>(def, documentDefault, name, description, aliases)
     {
         options->addSetting(this);
     }
@@ -530,76 +522,10 @@ inline void formatHelper(F & f, const Setting<AbsolutePath> & x) = delete;
 template<>
 void BaseSetting<std::set<std::filesystem::path>>::appendOrSet(std::set<std::filesystem::path> newValue, bool append);
 
-struct ExperimentalFeatureSettings : Config
-{
-private:
-    void anchor() override;
-
-public:
-    Setting<std::set<ExperimentalFeature>> experimentalFeatures{
-        this,
-        {},
-        "experimental-features",
-        R"(
-          Experimental features that are enabled.
-
-          Example:
-
-          ```
-          experimental-features = nix-command flakes
-          ```
-
-          The following experimental features are available:
-
-          {{#include experimental-features-shortlist.md}}
-
-          Experimental features are [further documented in the manual](@docroot@/development/experimental-features.md).
-        )"};
-
-    /**
-     * Check whether the given experimental feature is enabled.
-     */
-    bool isEnabled(const ExperimentalFeature &) const;
-
-    /**
-     * Require an experimental feature be enabled, throwing an error if it is
-     * not.
-     */
-    void require(const ExperimentalFeature &, std::string reason = "") const;
-
-    /**
-     * Require an experimental feature be enabled, throwing an error if it is
-     * not. The reason is lazily evaluated only if the feature is disabled.
-     */
-    template<typename GetReason>
-        requires std::invocable<GetReason> && std::convertible_to<std::invoke_result_t<GetReason>, std::string>
-    void require(const ExperimentalFeature & feature, const GetReason & getReason) const
-    {
-        if (isEnabled(feature))
-            return;
-        require(feature, getReason());
-    }
-
-    /**
-     * `std::nullopt` pointer means no feature, which means there is nothing that could be
-     * disabled, and so the function returns true in that case.
-     */
-    bool isEnabled(const std::optional<ExperimentalFeature> &) const;
-
-    /**
-     * `std::nullopt` pointer means no feature, which means there is nothing that could be
-     * disabled, and so the function does nothing in that case.
-     */
-    void require(const std::optional<ExperimentalFeature> &) const;
-};
-
 #define NIX_DECLARE_CONFIG_SERIALISER(TY)                     \
     template<>                                                \
     TY BaseSetting<TY>::parse(const std::string & str) const; \
     template<>                                                \
     std::string BaseSetting<TY>::to_string() const;
-
-// FIXME: don't use a global variable.
-extern ExperimentalFeatureSettings experimentalFeatureSettings;
 
 } // namespace nix

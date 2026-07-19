@@ -9,7 +9,6 @@
 
 namespace nix {
 
-enum struct ExperimentalFeature;
 
 /**
  * Get the value of a json object at a key safely, failing with a nice

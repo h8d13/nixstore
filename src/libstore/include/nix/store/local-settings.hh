@@ -3,7 +3,6 @@
 
 #include "nix/util/types.hh"
 #include "nix/util/configuration.hh"
-#include "nix/util/experimental-features.hh"
 #include "nix/util/users.hh"
 
 #include "nix/store/config.hh"

@@ -123,9 +123,6 @@ public:
 
           Normally the garbage collector will fail with an error if the nix daemon cannot delete a file, with this setting such errors will only be printed as warnings.
         )",
-        {},
-        true,
-        Xp::LocalOverlayStore,
     };
 
     Setting<bool> useRootsDaemon{
@@ -142,9 +139,6 @@ public:
 
           The daemon can be started with [`nix store roots-daemon`](@docroot@/command-ref/new-cli/nix3-store-roots-daemon.md).
         )",
-        {},
-        true,
-        Xp::LocalOverlayStore,
     };
 
     std::filesystem::path getRootsSocketPath() const;

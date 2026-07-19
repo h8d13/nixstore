@@ -101,7 +101,6 @@ sources = [ config_priv_h ] + files(
   'error.cc',
   'executable-path.cc',
   'exit.cc',
-  'experimental-features.cc',
   'file-content-address.cc',
   'file-descriptor.cc',
   'file-system.cc',

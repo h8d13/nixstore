@@ -362,7 +362,6 @@ void LocalStore::findRuntimeRoots(Roots & roots, bool censor)
     Roots unchecked;
 
     if (config->useRootsDaemon) {
-        experimentalFeatureSettings.require(Xp::LocalOverlayStore);
         unchecked = requestRuntimeRoots(*config, config->getRootsSocketPath());
     } else {
         unchecked = findRuntimeRootsUnchecked(*config);

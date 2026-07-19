@@ -116,7 +116,7 @@ EOF
 # demand there, not into every generation; trailing libs = runtime
 # deps of import-dir/libnixstore
 pacman -Syu --noconfirm --needed linux mkinitcpio squashfs-tools diffutils \
-	libblake3 boost-libs libsodium onetbb sqlite icu libxml2 libseccomp brotli
+	libblake3 boost-libs sqlite
 
 # resolved-managed DNS. Last on purpose: pacman above still needed the
 # host resolv.conf that the sandbox copies in

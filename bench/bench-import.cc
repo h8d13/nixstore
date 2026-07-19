@@ -75,7 +75,7 @@ int main(int argc, char ** argv)
 	}();
 
 	auto run = [&](const char * tag, bool capture) {
-		auto store = openStore("local?root=" + root + "/" + tag);
+		auto store = openStore(std::filesystem::path(root) / tag);
 		auto local = store.dynamic_pointer_cast<LocalStore>();
 
 		LocalStore::ImportFileHashes fileHashes;

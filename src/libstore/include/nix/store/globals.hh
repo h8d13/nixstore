@@ -7,7 +7,6 @@
 #include "nix/util/configuration.hh"
 #include "nix/util/environment-variables.hh"
 #include "nix/store/local-settings.hh"
-#include "nix/store/store-reference.hh"
 
 #include "nix/store/config.hh"
 
@@ -43,24 +42,6 @@ public:
      */
     std::filesystem::path nixStateDir;
 
-    Setting<StoreReference> storeUri{
-        this,
-        StoreReference::parse(getEnv("NIX_REMOTE").value_or("auto")),
-        "store",
-        R"(
-          The [URL of the Nix store](@docroot@/store/types/index.md#store-url-format)
-          to use for most operations.
-
-          See the
-          [Store Types](@docroot@/store/types/index.md)
-          section of the manual for supported store types and settings.
-
-          Can be overridden by the [`NIX_REMOTE`](@docroot@/command-ref/env-common.md#env-NIX_REMOTE) environment variable.
-
-          The default value is [`auto`](@docroot@/store/types/index.md#auto).
-        )"};
-
-    /* always WAL: the isWSL1() carve-out went with the build machinery */
     Setting<bool> useSQLiteWAL{this, true, "use-sqlite-wal", "Whether SQLite should use WAL mode."};
 
     /**

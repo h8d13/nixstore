@@ -38,7 +38,7 @@ int main(int argc, char ** argv)
 	initLibStore(false);
 	verbosity = lvlError;
 
-	auto store = openStore("local?root=" + root);
+	auto store = openStore(std::filesystem::path(root));
 	auto local = store.dynamic_pointer_cast<LocalStore>();
 	if (!local) {
 		fprintf(stderr, "not a LocalStore\n");

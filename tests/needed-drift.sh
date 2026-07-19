@@ -23,7 +23,7 @@ needed() {
 		| sed 's/\.so.*//' | sort | tr '\n' ' '
 }
 
-STORE_WANT="ld-linux-x86-64 libboost_url libc libgcc_s libnixutil libsqlite3 libstdc++ "
+STORE_WANT="ld-linux-x86-64 libc libgcc_s libnixutil libsqlite3 libstdc++ "
 UTIL_WANT="ld-linux-x86-64 libblake3 libboost_context libboost_iostreams libboost_url libc libcrypto libgcc_s libm libstdc++ "
 
 # r=0-or-1 dance keeps `sh -e` from aborting before ok() can report

@@ -66,7 +66,7 @@ int main(int argc, char ** argv)
 	initLibStore(false);
 	verbosity = lvlError;
 
-	auto store = openStore("local?root=" + fs::absolute(argv[1]).string());
+	auto store = openStore(fs::absolute(argv[1]));
 	auto local = store.dynamic_pointer_cast<LocalStore>();
 	fs::path linksDir = fs::path(argv[1]) / "nix/store/.links";
 

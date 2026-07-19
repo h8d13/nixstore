@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
 	   on (upstream gate); both versions carry the setting */
 	globalConfig.set("auto-optimise-store", "true");
 
-	auto store = openStore("local?root=" + std::filesystem::absolute(argv[1]).string());
+	auto store = openStore(std::filesystem::absolute(argv[1]));
 	auto local = store.dynamic_pointer_cast<LocalStore>();
 	auto acc = makeFSSourceAccessor(std::filesystem::absolute(argv[2]));
 

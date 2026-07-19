@@ -154,16 +154,11 @@ public:
         return "Local Store";
     }
 
-    static StringSet uriSchemes()
-    {
-        return {"local"};
-    }
-
     static std::string doc();
 
     ref<Store> openStore() const override;
 
-    StoreReference getReference() const override;
+    std::string getHumanReadableURI() const override;
 };
 
 MakeError(PathInUse, Error);

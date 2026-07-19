@@ -31,8 +31,7 @@ int main(int argc, char ** argv)
 	verbosity = lvlError;
 	globalConfig.set("build-users-group", "");
 
-	/* openStore aborts on a relative root */
-	auto store = openStore("local?root=" + std::filesystem::absolute(argv[1]).string());
+	auto store = openStore(std::filesystem::absolute(argv[1]));
 
 	StorePathSet paths;
 	for (int i = 2; i < argc; i++)

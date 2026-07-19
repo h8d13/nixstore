@@ -27,8 +27,7 @@ int main(int argc, char ** argv)
 	verbosity = lvlError;
 	globalConfig.set("build-users-group", "");
 
-	/* openStore aborts on a relative root */
-	auto store = openStore("local?root=" + std::filesystem::absolute(argv[1]).string());
+	auto store = openStore(std::filesystem::absolute(argv[1]));
 	auto & gcStore = require<GcStore>(*store);
 
 	auto & fsStore = require<LocalFSStore>(*store);

@@ -11,7 +11,6 @@
 #include "nix/store/path-info.hh"
 #include "nix/util/repair-flag.hh"
 #include "nix/store/store-dir-config.hh"
-#include "nix/store/store-reference.hh"
 #include "nix/util/source-path.hh"
 
 #include <nlohmann/json_fwd.hpp>
@@ -28,7 +27,6 @@ MakeError(Unsupported, Error);
 MakeError(SubstituteGone, Error);
 MakeError(SubstituterDisabled, Error);
 
-MakeError(InvalidStoreReference, Error);
 
 struct SourceAccessor;
 class Store;
@@ -168,7 +166,7 @@ public:
     /**
      * @pathType see FilePathType
      */
-    StoreConfigBase(const StoreReference::Params & params, FilePathType pathType);
+    StoreConfigBase(const StringMap & params, FilePathType pathType);
 };
 
 /**
@@ -209,7 +207,7 @@ private:
     void anchor() override;
 
 public:
-    using Params = StoreReference::Params;
+    using Params = StringMap;
 
     StoreConfig(const Params & params, FilePathType pathType);
 
@@ -309,26 +307,15 @@ public:
     virtual ref<Store> openStore() const = 0;
 
     /**
-     * Render the config back to a `StoreReference`. It should round-trip
-     * with `resolveStoreConfig` (for stores configs that are
-     * registered).
-     */
-    virtual StoreReference getReference() const;
-
-    /**
-     * Get a textual representation of the store reference.
+     * Get a textual representation of the store.
      *
      * @warning This is only suitable for logging or error messages.
-     * This will not roundtrip when parsed as a StoreReference.
      * Must NOT be used as a cache key or otherwise be relied upon to
      * be stable.
-     *
-     * Can be implemented by subclasses to make the URI more legible,
-     * e.g. when some query parameters are necessary to make sense of the URI.
      */
     virtual std::string getHumanReadableURI() const
     {
-        return getReference().render(/*withParams=*/false);
+        return "local";
     }
 };
 

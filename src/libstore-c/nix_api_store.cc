@@ -9,7 +9,6 @@
 #include "nix/store/path.hh"
 #include "nix/store/store-api.hh"
 #include "nix/store/store-open.hh"
-#include "nix/store/store-reference.hh"
 #include "nix/store/local-fs-store.hh"
 #include "nix/util/base-nix-32.hh"
 
@@ -42,19 +41,16 @@ Store * nix_store_open(nix_c_context * context, const char * uri, const char ***
     if (context)
         context->last_err_code = NIX_OK;
     try {
-        std::string uri_str = uri ? uri : "";
+        /* `uri` is now just the store root path; empty means "/". */
+        std::filesystem::path root{uri && uri[0] ? uri : "/"};
 
-        if (uri_str.empty())
-            return new Store{nix::openStore()};
-
-        auto storeRef = nix::StoreReference::parse(uri_str);
-
+        nix::Store::Config::Params extraParams;
         if (params) {
             for (size_t i = 0; params[i] != nullptr; i++) {
-                storeRef.params[params[i][0]] = params[i][1];
+                extraParams[params[i][0]] = params[i][1];
             }
         }
-        return new Store{nix::openStore(std::move(storeRef))};
+        return new Store{nix::openStore(std::move(root), std::move(extraParams))};
     }
     NIXC_CATCH_ERRS_NULL
 }
@@ -69,7 +65,7 @@ nix_err nix_store_get_uri(nix_c_context * context, Store * store, nix_get_string
     if (context)
         context->last_err_code = NIX_OK;
     try {
-        auto res = store->ptr->config.getReference().render(/*withParams=*/true);
+        auto res = store->ptr->config.getHumanReadableURI();
         return call_nix_get_string_callback(res, callback, user_data);
     }
     NIXC_CATCH_ERRS

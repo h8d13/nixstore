@@ -11,7 +11,8 @@
 #include "nix/util/source-accessor.hh"
 #include "nix/util/fs-sink.hh"
 #include "nix/util/users.hh"
-#include "nix/store/store-registration.hh"
+#include "nix/store/store-open.hh"
+#include "nix/util/url.hh"
 
 #include <algorithm>
 #include <cstring>
@@ -441,22 +442,10 @@ std::filesystem::path LocalStoreConfig::getRootsSocketPath() const
     return std::filesystem::path(stateDir.get()) / "gc-roots-socket" / "socket";
 }
 
-StoreReference LocalStoreConfig::getReference() const
+std::string LocalStoreConfig::getHumanReadableURI() const
 {
     auto params = getQueryParams();
-    /* Back-compatibility kludge. Tools like nix-output-monitor expect 'local'
-       and can't parse 'local://'. */
-    if (params.empty())
-        /* TODO: Add the rootDir here as the authority? */
-        return {.variant = StoreReference::Local{}};
-    return {
-        .variant =
-            StoreReference::Specified{
-                .scheme = *uriSchemes().begin(),
-                /* TODO: Add the rootDir here as the authority? */
-            },
-        .params = std::move(params),
-    };
+    return params.empty() ? "local" : "local?" + encodeQuery(params);
 }
 
 bool LocalStoreConfig::getReadOnly() const
@@ -1845,6 +1834,16 @@ std::optional<std::string> LocalStore::getVersion()
     return nixVersion;
 }
 
-static RegisterStoreImplementation<LocalStore::Config> regLocalStore;
+ref<Store> openStore(const std::filesystem::path & root, Store::Config::Params params)
+{
+    if (!root.is_absolute())
+        throw UsageError("store root '%s' must be an absolute path", root.string());
+    params.insert_or_assign("root", root.string());
+    auto config = make_ref<LocalStore::Config>(params);
+    config->warnUnknownSettings();
+    auto store = config->openStore();
+    store->init();
+    return store;
+}
 
 } // namespace nix

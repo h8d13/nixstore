@@ -32,8 +32,6 @@ void SubstituteGone::anchor() {}
 
 void SubstituterDisabled::anchor() {}
 
-void InvalidStoreReference::anchor() {}
-
 void StoreConfigBase::anchor() {}
 
 static std::string canonStoreDir(std::string path)
@@ -100,7 +98,7 @@ std::string StoreConfigBase::StoreDirSetting::parse(const std::string & str) con
     assert(false);
 }
 
-StoreConfigBase::StoreConfigBase(const StoreReference::Params & params, FilePathType pathType)
+StoreConfigBase::StoreConfigBase(const StringMap & params, FilePathType pathType)
     : Config(params)
     , storeDir_{this, pathType}
 {
@@ -364,11 +362,6 @@ Store::Store(const Store::Config & config)
     assertLibStoreInitialized();
 }
 
-StoreReference StoreConfig::getReference() const
-{
-    return {.variant = StoreReference::Auto{}};
-}
-
 bool StoreConfig::getReadOnly() const
 {
     return settings.readOnlyMode;
@@ -603,28 +596,6 @@ const Store::Stats & Store::getStats()
 static std::string
 makeCopyPathMessage(const StoreConfig & srcCfg, const StoreConfig & dstCfg, std::string_view storePath)
 {
-    auto src = srcCfg.getReference();
-    auto dst = dstCfg.getReference();
-
-    auto isShorthand = [](const StoreReference & ref) {
-        /* At this point StoreReference **must** be resolved. */
-        const auto & specified = std::visit(
-            overloaded{
-                [](const StoreReference::Auto &) -> const StoreReference::Specified & { unreachable(); },
-                [](const StoreReference::Specified & specified) -> const StoreReference::Specified & {
-                    return specified;
-                }},
-            ref.variant);
-        const auto & scheme = specified.scheme;
-        return (scheme == "local" || scheme == "unix") && specified.authority.empty();
-    };
-
-    if (isShorthand(src))
-        return fmt("copying path '%s' to '%s'", storePath, dstCfg.getHumanReadableURI());
-
-    if (isShorthand(dst))
-        return fmt("copying path '%s' from '%s'", storePath, srcCfg.getHumanReadableURI());
-
     return fmt(
         "copying path '%s' from '%s' to '%s'", storePath, srcCfg.getHumanReadableURI(), dstCfg.getHumanReadableURI());
 }

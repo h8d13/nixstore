@@ -32,6 +32,4 @@ headers = [ config_pub_h ] + files(
   'store-cast.hh',
   'store-dir-config.hh',
   'store-open.hh',
-  'store-reference.hh',
-  'store-registration.hh',
 )

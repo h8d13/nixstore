@@ -101,7 +101,6 @@ boost = dependency(
     'container',
     # Shouldn't list, because can header-only, and Meson currently looks for libs
     #'regex',
-    'url',
   ],
   include_type : 'system',
 )
@@ -212,8 +211,6 @@ sources = files(
   'sqlite.cc',
   'store-api.cc',
   'store-dir-config.cc',
-  'store-reference.cc',
-  'store-registration.cc',
 )
 
 subdir('include/nix/store')

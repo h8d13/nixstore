@@ -13,6 +13,15 @@ only lives in RAM and `checkupdates` equivalent is ran before `nixgen-update`
 
 ![SchemaArchinix](./schema.png)
 
+This was generally the idea (like have git through changes you make on system): Yet for the current to vanish when nothing to `-commit`:
+
+<img width="1524" height="797" alt="Screenshot_20260720_174338" src="https://github.com/user-attachments/assets/d43ebffa-8a86-436b-8169-8b5c5c0d40c5" />
+
+Inside the box (installed by `setup-boot.sh`):
+All commands: reference is `nixgen-help` (source:
+[nixgen/nixgen-help](nixgen/nixgen-help), drift-checked by
+update-test: every installed nixgen-* must appear in it).
+
 ## Tools
 
 | script | role |
@@ -38,12 +47,6 @@ only lives in RAM and `checkupdates` equivalent is ran before `nixgen-update`
 | `tests/boot-test.sh` | headless QEMU smoke-boot of the ISO, PASS on autologin |
 | `tests/update-test.sh` | e2e: kernel upgrade in the box, boot the result from the store disk alone |
 | `tests/meta-test.sh` | host-only: user created in the sandbox survives manifest + restmeta replay |
-
-
-Inside the box (installed by `setup-boot.sh`):
-All commands: reference is `nixgen-help` (source:
-[nixgen/nixgen-help](nixgen/nixgen-help), drift-checked by
-update-test: every installed nixgen-* must appear in it).
 
 ## From nothing
 

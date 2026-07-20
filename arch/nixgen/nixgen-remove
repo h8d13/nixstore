@@ -59,7 +59,7 @@ for GEN in "$@"; do
 		rc=1
 		continue
 	fi
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/rm-path \
+	/usr/local/bin/rm-path \
 		/nixstoredev "$GEN" || { rc=1; continue; }
 	# prune the generation's menu block (menuentry line through '}')
 	if [ -f /nixstoredev/entries.cfg ]; then

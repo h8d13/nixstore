@@ -199,13 +199,13 @@ drive "NIXARCH BOOT OK" \
 	"Only in b/etc: diffmark" \
 	'ok=1; for t in /usr/local/bin/nixgen-*; do nixgen-help | grep -q "$(basename "$t")" || { echo "undocumented: $t"; ok=0; }; done; [ $ok = 1 ] && echo HELP_OK' \
 	"HELP_OK" \
-	'S=$(basename "$(ls -d /nixstoredev/nix/store/*-test-up)"); LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/export-path /nixstoredev "$S" > /nixstoredev/ship.bundle && echo SHIP_"OK"' \
+	'S=$(basename "$(ls -d /nixstoredev/nix/store/*-test-up)"); export-path /nixstoredev "$S" > /nixstoredev/ship.bundle && echo SHIP_"OK"' \
 	"SHIP_OK" \
 	"nixgen-remove test-up" \
 	"GRUB entry pruned" \
 	'[ ! -e "/nixstoredev/nix/store/$S" ] && echo SHIP_"GONE"' \
 	"SHIP_GONE" \
-	'B=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/import-path /nixstoredev < /nixstoredev/ship.bundle) && rm /nixstoredev/ship.bundle && [ "$(basename "$B")" = "$S" ] && echo SHIP_"BACK"' \
+	'B=$(import-path /nixstoredev < /nixstoredev/ship.bundle) && rm /nixstoredev/ship.bundle && [ "$(basename "$B")" = "$S" ] && echo SHIP_"BACK"' \
 	"SHIP_BACK" \
 	'nixgen-adopt "$S"' \
 	"GRUB entry added" \

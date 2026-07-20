@@ -142,7 +142,7 @@ fi
 # import-dir stdout is exactly the store path (mtime-based ls -t
 # selection cannot work, store mtimes are all canonicalised to 1);
 # stash it for the outer shell across the namespace boundary
-LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/import-dir \
+/usr/local/bin/import-dir \
 	/nixstoredev "$NAME" "$SCRATCH/mnt" > "$SCRATCH/imported"
 EOF
 unshare -mpf --kill-child sh "$SCRATCH/inner.sh"

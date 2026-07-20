@@ -72,6 +72,10 @@ install -m755 "$I/payload/rm-path" /usr/local/bin/rm-path
 install -m755 "$I/payload/export-path" /usr/local/bin/export-path
 install -m755 "$I/payload/import-path" /usr/local/bin/import-path
 cp -P "$I"/payload/libnix*.so* /usr/local/lib/
+# libnixstore lives outside the stock linker path; register it or the
+# documented bare export-path/import-path flow dies at link time
+echo /usr/local/lib > /etc/ld.so.conf.d/nixgen.conf
+ldconfig
 install -m755 "$I/nixgen-commit" /usr/local/bin/nixgen-commit
 install -m755 "$I/nixgen-remove" /usr/local/bin/nixgen-remove
 install -m755 "$I/nixgen-update" /usr/local/bin/nixgen-update

@@ -49,7 +49,7 @@ FREE=$(df -Pm "$TARGET" | awk 'NR==2 { print $4 }')
 /usr/local/bin/nixgen-savemeta "$SNAP"
 # import-dir stdout is exactly the store path; mtime-based selection
 # (ls -t) cannot work, every store path's mtime is canonicalised to 1
-NEW=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/import-dir \
+NEW=$(/usr/local/bin/import-dir \
 	"$TARGET" "$NAME" "$SNAP")
 GEN=$(basename "$NEW")
 

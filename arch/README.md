@@ -13,7 +13,9 @@ only lives in RAM and `checkupdates` equivalent is ran before `nixgen-update`
 
 ![SchemaArchinix](./schema.png)
 
-This was generally the idea (like have git through changes you make on system): Yet for the current to vanish when nothing to `-commit`:
+This was generally the idea (like having `git` through changes you make on system).
+
+Yet for the current to vanish when nothing to `-commit`:
 
 <img width="1524" height="797" alt="Screenshot_20260720_174338" src="https://github.com/user-attachments/assets/d43ebffa-8a86-436b-8169-8b5c5c0d40c5" />
 

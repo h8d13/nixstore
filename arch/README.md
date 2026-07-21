@@ -19,6 +19,9 @@ Yet for the current to vanish when nothing to `-commit`:
 
 <img width="1524" height="797" alt="Screenshot_20260720_174338" src="https://github.com/user-attachments/assets/d43ebffa-8a86-436b-8169-8b5c5c0d40c5" />
 
+> My goal was for trying new stuff inside a box to be "forgiving".
+> But also be more deliberate about what you do carry into a system.
+
 Inside the box (installed by `setup-boot.sh`):
 All commands: reference is `nixgen-help` (source:
 [nixgen/nixgen-help](nixgen-help), drift-checked by

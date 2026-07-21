@@ -35,17 +35,15 @@ generation offline, rollback is booting an older GRUB entry.
 
 **GRUB only**, since it has to read the store to load a generation's
 kernel. Store filesystem is ext4 by default, with btrfs, xfs and f2fs
-in the table ([`arch/nixgen/nixgen-fs`](arch/nixgen/nixgen-fs)):
-`nixgen-setup /dev/disk --fs btrfs`, or a fourth argument to the image
-builders.
+in the table ([`arch/nixgen/nixgen-fs`](arch/nixgen/nixgen-fs))
 
-`nixgen-setup /dev/disk` installs current running generation to a hard disk.
+`nixgen-setup /dev/disk --fs xfs` installs current running generation to a hard disk.
 > [!NOTE]
-> The ISO needs a disk for persistence. Otherwise vanishes on reboot.
+> The ISO is read-only but, so is a running system. Otherwise vanishes on reboot.
 
 Then, in the box: `nixgen-{commit,update,switch,remove,listid,diffid,setup}`;
 
-`nixgen-help` is the full reference.
+`nixgen-help` is the full [reference](https://github.com/h8d13/archinix/blob/main/arch/nixgen/nixgen-help).
 
 ### From source:
 
